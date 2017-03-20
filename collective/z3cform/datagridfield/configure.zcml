@@ -9,6 +9,7 @@
     xmlns:zcml="http://namespaces.zope.org/zcml">
   <!-- Include configuration for dependencies listed in setup.py -->
   <includeDependencies package="." />
+  <include package=".demo" />
   <genericsetup:registerProfile
       description=""
       directory="profiles/default"
@@ -36,6 +37,8 @@
       factory=".converters.DictRowSerializer"
       zcml:condition="installed transmogrify.dexterity"
   />
+  <!-- Subform default factory -->
+  <adapter factory=".objectsubform.SubformAdapter" />
   <z3c:widgetTemplate
       layer="plone.app.z3cform.interfaces.IPloneFormLayer"
       mode="input"

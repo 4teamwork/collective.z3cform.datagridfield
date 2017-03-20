@@ -2,7 +2,6 @@
 from plone.app.testing import FunctionalTesting
 from plone.app.testing import PLONE_FIXTURE
 from plone.app.testing import PloneSandboxLayer
-from zope.configuration import xmlconfig
 
 
 class Fixture(PloneSandboxLayer):
@@ -12,14 +11,14 @@ class Fixture(PloneSandboxLayer):
     def setUpZope(self, app, configurationContext):
 
         import collective.z3cform.datagridfield
-        xmlconfig.file(
+        self.loadZCML(
             'configure.zcml',
             collective.z3cform.datagridfield,
             context=configurationContext
         )
 
         import collective.z3cform.datagridfield_demo
-        xmlconfig.file(
+        self.loadZCML(
             'configure.zcml',
             collective.z3cform.datagridfield_demo,
             context=configurationContext

@@ -16,7 +16,7 @@ class BlockDataGridField(DataGridField):
     (horizontal).
     """
 
-    klass = "blockdatagridfield"
+    klass = 'blockdatagridfield'
 
     def createObjectWidget(self, idx):
         """

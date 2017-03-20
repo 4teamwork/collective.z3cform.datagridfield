@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
-"""
-    Implementation of the widget
-"""
+from .autoform import AutoExtensibleSubForm
+from .autoform import AutoExtensibleSubformAdapter
 from Acquisition import aq_parent
 from interfaces import IDataGridField
 from plone.app.z3cform.interfaces import IPloneFormLayer
+from plone.autoform.interfaces import MODES_KEY
 from z3c.form import interfaces
 from z3c.form.browser.multi import MultiWidget
 from z3c.form.browser.object import ObjectWidget
@@ -29,21 +29,8 @@ import logging
 import lxml
 import zope.schema.interfaces
 
-logger = logging.getLogger(__name__)
 
-try:
-    from plone import autoform as has_autoform
-except ImportError:
-    has_autoform = None
-if has_autoform:
-    # support plone.autoform directives within the row schema
-    from autoform import AutoExtensibleSubForm as ObjectSubForm
-    from autoform import AutoExtensibleSubformAdapter as SubformAdapter
-    from plone.autoform.interfaces import MODES_KEY
-else:
-    from z3c.form.object import ObjectSubForm
-    from z3c.form.object import SubformAdapter
-    MODES_KEY = None
+logger = logging.getLogger(__name__)
 
 
 # ------------[ Main Widget ]-----------------------------------------------
@@ -57,9 +44,9 @@ class DataGridField(MultiWidget):
     allow_delete = True
     allow_reorder = False
     auto_append = True
-    display_table_css_class = "datagridwidget-table-view"
+    display_table_css_class = 'datagridwidget-table-view'
 
-    klass = "datagridfield"
+    klass = 'datagridfield'
 
     # You can give data-extra attribute
     # for the widget to allow there some custom
@@ -68,7 +55,12 @@ class DataGridField(MultiWidget):
 
     # Define all possible template backends
 
-    def setField(self, value):
+    @property
+    def field(self):
+        return self._field
+
+    @field.setter
+    def field(self, value):
         """
             The field information is passed to the widget after it is
             initialised.  Use this call to initialise the column
@@ -76,7 +68,6 @@ class DataGridField(MultiWidget):
         """
         self._field = value
         schema = self._field.value_type.schema
-
         fieldmodes = {}
         if MODES_KEY:
             try:
@@ -97,20 +88,13 @@ class DataGridField(MultiWidget):
             }
             self.columns.append(col)
 
-    def getField(self):
-        return self._field
-
-    field = property(getField, setField)
-
     def createObjectWidget(self, idx):
         """
         Create the widget which handles individual rows.
 
         Allow row-widget overriding for more specific use cases.
         """
-
         valueType = self.field.value_type
-
         if IObject.providedBy(valueType):
             widget = DataGridFieldObjectFactory(valueType, self.request)
             widget.setErrors = idx not in ['TT', 'AA']
@@ -119,30 +103,24 @@ class DataGridField(MultiWidget):
                 (valueType, self.request),
                 interfaces.IFieldWidget
             )
-
         return widget
 
     def getWidget(self, idx):
         """Create the object widget. This is used to avoid looking up
         the widget.
         """
-
         widget = self.createObjectWidget(idx)
 
         # widgets.line1 -> form-widgets-address-0-widgets-line1
         self.setName(widget, idx)
 
         widget.__parent__ = self
-
         widget.mode = self.mode
         widget.klass = 'datagridwidget-row'
         # set widget.form (objectwidget needs this)
         if interfaces.IFormAware.providedBy(self):
             widget.form = self.form
-            alsoProvides(
-                widget,
-                interfaces.IFormAware
-            )
+            alsoProvides(widget, interfaces.IFormAware)
         widget.update()
         return widget
 
@@ -246,9 +224,11 @@ def datagrid_field_get(self):
             try:
                 converter = interfaces.IDataConverter(widget)
                 value[name] = converter.toFieldValue(widget_value)
-            except (FormatterValidationError,
-                    zope.schema.interfaces.ValidationError,
-                    ValueError):
+            except (
+                FormatterValidationError,
+                zope.schema.interfaces.ValidationError,
+                ValueError
+            ):
                 value[name] = widget_value
     return value
 
@@ -264,13 +244,15 @@ def datagrid_field_set(self, value):
             fieldset_field = self.field.schema[name]
             if fieldset_field.readonly:
                 continue
-
             if name in active_names:
-                self.applyValue(self.subform.widgets[name],
-                                value.get(name, interfaces.NO_VALUE))
+                self.applyValue(
+                    self.subform.widgets[name],
+                    value.get(name, interfaces.NO_VALUE)
+                )
 
 
-PAT_XPATH = "//*[contains(concat(' ', normalize-space(@class), ' '), ' pat-')]"
+PAT_XPATH = "//*[contains(concat(' ', normalize-space(@class), ' '), ' pat-')]"  # noqa Q000
+
 
 class DataGridFieldObject(ObjectWidget):
 
@@ -310,8 +292,8 @@ class DataGridFieldObject(ObjectWidget):
         """See z3c.form.interfaces.IWidget."""
         html = super(DataGridFieldObject, self).render()
         if (
-            'datagridwidget-empty-row' in self.klass #or
-            #'auto-append' in  self.klass
+            'datagridwidget-empty-row' in self.klass or
+            'auto-append' in self.klass
         ):
             # deactivate patterns
             fragments = lxml.html.fragments_fromstring(html)
@@ -336,7 +318,7 @@ def DataGridFieldObjectFactory(field, request):
 # ------------[ Form to draw the line ]---------------------------------------
 
 
-class DataGridFieldObjectSubForm(ObjectSubForm):
+class DataGridFieldObjectSubForm(AutoExtensibleSubForm):
     """Local class of subform - this is intended to all configuration
     information to be passed all the way down to the subform.
 
@@ -374,34 +356,44 @@ class DataGridFieldObjectSubForm(ObjectSubForm):
         rv = super(DataGridFieldObjectSubForm, self).updateWidgets()
         if hasattr(self.parentForm, 'datagridUpdateWidgets'):
             self.parentForm.datagridUpdateWidgets(
-                self, self.widgets, self.__parent__.__parent__)
+                self,
+                self.widgets,
+                self.__parent__.__parent__
+            )
         elif hasattr(self.parentForm.__parent__, 'datagridUpdateWidgets'):
             self.parentForm.__parent__.datagridUpdateWidgets(
-                self, self.widgets, self.__parent__.__parent__)
+                self,
+                self.widgets,
+                self.__parent__.__parent__
+            )
         return rv
 
     def setupFields(self):
         rv = super(DataGridFieldObjectSubForm, self).setupFields()
         if hasattr(self.parentForm, 'datagridInitialise'):
             self.parentForm.datagridInitialise(
-                self, self.__parent__.__parent__)
+                self,
+                self.__parent__.__parent__
+            )
         elif hasattr(self.parentForm.__parent__, 'datagridInitialise'):
             self.parentForm.__parent__.datagridInitialise(
-                self, self.__parent__.__parent__)
+                self,
+                self.__parent__.__parent_
+            )
         return rv
 
 
 @adapter(
-    Interface,  # widget value
-    IPloneFormLayer,           # request
-    Interface,  # widget context
-    Interface,  # form
-    DataGridFieldObject,       # widget
-    Interface,  # field
-    Interface,  # field.schema
+    Interface,            # widget value
+    IPloneFormLayer,      # request
+    Interface,            # widget context
+    Interface,            # form
+    DataGridFieldObject,  # widget
+    Interface,            # field
+    Interface,            # field.schema
 )
 @implementer(interfaces.ISubformFactory)
-class DataGridFieldSubformAdapter(SubformAdapter):
+class DataGridFieldSubformAdapter(AutoExtensibleSubformAdapter):
     """Give it my local class of subform, rather than the default"""
 
     factory = DataGridFieldObjectSubForm
@@ -411,9 +403,9 @@ class DataGridFieldSubformAdapter(SubformAdapter):
 @adapter(
     Interface,
     Interface,
-    Interface,  # Form
-    IList,                     # field
-    DataGridField,             # widgets
+    Interface,      # Form
+    IList,          # field
+    DataGridField,  # widgets
 )
 class DataGridValidator(SimpleFieldValidator):
     """

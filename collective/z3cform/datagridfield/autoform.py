@@ -7,6 +7,8 @@
     Adds subform support for plone.autoform.
 
 """
+from .objectsubform import ObjectSubForm
+from .objectsubform import SubformAdapter
 from plone.autoform.form import AutoExtensibleForm
 from plone.autoform.interfaces import IAutoExtensibleForm
 from z3c.form import action
@@ -15,8 +17,6 @@ from z3c.form.interfaces import IFormLayer
 from z3c.form.interfaces import IMultipleErrors
 from z3c.form.interfaces import IObjectWidget
 from z3c.form.interfaces import ISubformFactory
-from z3c.form.object import ObjectSubForm
-from z3c.form.object import SubformAdapter
 from zope.component import adapter
 from zope.i18nmessageid import Message
 from zope.interface import implementer
@@ -83,4 +83,4 @@ class AutoExtensibleSubformAdapter(SubformAdapter):
 @adapter(IMultipleErrors, None, None, None, IAutoExtensibleForm, None)
 class MultipleErrorViewSnippetWithMessage(MultipleErrorViewSnippet):
     def render(self):
-        return Message(u"There were some errors.", domain="z3c.form")
+        return Message(u'There were some errors.', domain='z3c.form')
