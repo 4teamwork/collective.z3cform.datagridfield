@@ -1,8 +1,8 @@
 Changelog
 =========
 
-1.2.1 (unreleased)
-------------------
+2017-04-18-4teamwork (2017-04-18)
+---------------------------------
 
 - Set widget mode on cell widget in order to support autoform mode directive. [jone]
 
