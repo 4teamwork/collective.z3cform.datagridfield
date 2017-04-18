@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 import os
 
-version = '2017-04-18-4teamwork'
+version = '2017-04-18-4teamwork.1.0dev.dev0'
 
 setup(name='collective.z3cform.datagridfield',
       version=version,
